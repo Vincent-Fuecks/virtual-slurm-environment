@@ -8,22 +8,18 @@ if [ ! -f .env ]; then
 fi
 
 SLURM_VERSION=$(grep "^SLURM_VERSION=" .env | cut -d'=' -f2)
-if [ -z "$SLURM_VERSION" ]; then
-    echo "Error: SLURM_VERSION not found in .env"
-    exit 1
-fi
-
-# Extract major.minor version (e.g., 25.05 from 25.05.3)
 VERSION_DIR=$(echo "$SLURM_VERSION" | cut -d. -f1-2)
 
 restart=false
 
 for var in "$@"
 do
-    # Determine the source path based on filename
     case "$var" in
         slurm.conf)
             SOURCE_FILE="config/${VERSION_DIR}/slurm.conf"
+            ;;
+        topology.conf)
+            SOURCE_FILE="config/${VERSION_DIR}/topology.conf"
             ;;
         slurmdbd.conf)
             SOURCE_FILE="config/common/slurmdbd.conf"
@@ -43,14 +39,20 @@ do
         exit 1
     fi
 
-    echo "Copying $SOURCE_FILE to container..."
-    export SLURM_TMP=$(cat "$SOURCE_FILE")
-    docker exec slurmctld bash -c "echo \"$SLURM_TMP\" >/etc/slurm/\"$var\""
+    echo "Copying $SOURCE_FILE to containers..."
+    
+    for container in slurmctld slurmdbd slurmrestd c0 c1 c2 c3 c4 c5 c6; do
+        if docker ps --format '{{.Names}}' | grep -q "$container"; then
+            docker cp "$SOURCE_FILE" "$container:/etc/slurm/$var"
+            docker exec -u root "$container" chown slurm:slurm "/etc/slurm/$var"
+        else
+            echo "Skipping $container (not running)"
+        fi
+    done
     restart=true
 done
 
-if $restart; then
-    echo "Restarting containers..."
-    docker compose restart
-    echo "Configuration updated successfully"
+if [ "$restart" = true ]; then
+    echo "Restarting slurmctld and slurmrestd..."
+    docker compose restart slurmctld slurmrestd
 fi

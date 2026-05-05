@@ -63,6 +63,7 @@ services:
       - etc_slurm:/etc/slurm:z
       - slurm_jobdir:/data:z
       - var_log_slurm:/var/log/slurm:z
+      - ./config/24.11/topology.conf:/etc/slurm/topology.conf:ro
     expose:
       - "6817"
     depends_on:
@@ -78,15 +79,19 @@ services:
       start_period: 20s
 
   slurmrestd:
+    user: root
     image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
-    command: ["slurmrestd"]
+    command: ["slurmrestd", "-f", "/etc/slurm/slurm.conf", "-vvv", "0.0.0.0:6820"]
     container_name: slurmrestd
     hostname: slurmrestd
     privileged: true
+    environment:
+      - SLURM_JWT=yes
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
       - var_log_slurm:/var/log/slurm
+      - ./config/24.11/topology.conf:/etc/slurm/topology.conf:ro
     ports:
       - "6820:6820"
     expose:
@@ -98,6 +103,32 @@ services:
       - slurm-network
     healthcheck:
       test: ["CMD-SHELL", "test -S /var/run/slurmrestd/slurmrestd.socket"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  c0:
+    image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
+    command: ["slurmd"]
+    container_name: c0
+    hostname: c0
+    working_dir: /data
+    privileged: true
+    volumes:
+      - etc_munge:/etc/munge
+      - etc_slurm:/etc/slurm
+      - slurm_jobdir:/data
+      - var_log_slurm:/var/log/slurm
+    expose:
+      - "6818"
+    depends_on:
+      slurmctld:
+        condition: service_healthy
+    networks:
+      - slurm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pidof slurmd"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -134,6 +165,111 @@ services:
     command: ["slurmd"]
     container_name: c2
     hostname: c2
+    working_dir: /data
+    privileged: true
+    volumes:
+      - etc_munge:/etc/munge
+      - etc_slurm:/etc/slurm
+      - slurm_jobdir:/data
+      - var_log_slurm:/var/log/slurm
+    expose:
+      - "6818"
+    depends_on:
+      slurmctld:
+        condition: service_healthy
+    networks:
+      - slurm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pidof slurmd"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # HPC Configuration
+  c3:
+    image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
+    command: ["slurmd"]
+    container_name: c3
+    hostname: c3
+    working_dir: /data
+    privileged: true
+    volumes:
+      - etc_munge:/etc/munge
+      - etc_slurm:/etc/slurm
+      - slurm_jobdir:/data
+      - var_log_slurm:/var/log/slurm
+    expose:
+      - "6818"
+    depends_on:
+      slurmctld:
+        condition: service_healthy
+    networks:
+      - slurm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pidof slurmd"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  c4:
+    image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
+    command: ["slurmd"]
+    container_name: c4
+    hostname: c4
+    working_dir: /data
+    privileged: true
+    volumes:
+      - etc_munge:/etc/munge
+      - etc_slurm:/etc/slurm
+      - slurm_jobdir:/data
+      - var_log_slurm:/var/log/slurm
+    expose:
+      - "6818"
+    depends_on:
+      slurmctld:
+        condition: service_healthy
+    networks:
+      - slurm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pidof slurmd"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  c5:
+    image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
+    command: ["slurmd"]
+    container_name: c5
+    hostname: c5
+    working_dir: /data
+    privileged: true
+    volumes:
+      - etc_munge:/etc/munge
+      - etc_slurm:/etc/slurm
+      - slurm_jobdir:/data
+      - var_log_slurm:/var/log/slurm
+    expose:
+      - "6818"
+    depends_on:
+      slurmctld:
+        condition: service_healthy
+    networks:
+      - slurm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pidof slurmd"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  c6:
+    image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
+    command: ["slurmd"]
+    container_name: c6
+    hostname: c6
     working_dir: /data
     privileged: true
     volumes:

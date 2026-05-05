@@ -35,6 +35,7 @@ RUN set -ex \
        hwloc-devel \
        json-c-devel \
        libcurl-devel \
+       libjwt-devel \
        libyaml-devel \
        lua-devel \
        lz4-devel \
@@ -111,6 +112,7 @@ RUN set -ex \
        hwloc \
        json-c \
        jq \
+       libjwt \
        libaec \
        libyaml \
        lua \
