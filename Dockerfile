@@ -11,7 +11,7 @@ FROM rockylinux/rockylinux:9 AS builder
 
 ARG SLURM_VERSION
 ARG TARGETARCH
-
+    
 # Enable CRB and EPEL repositories for development packages
 # Install RPM build tools and dependencies
 RUN set -ex \
@@ -221,6 +221,11 @@ COPY --chown=slurm:slurm --chmod=0600 examples /root/examples
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Create the vrmUser to match the working cluster configuration
+RUN set -x \
+    && groupadd --gid 1100 vrmUser \
+    && useradd -m -s /bin/bash --uid 1100 -g vrmUser vrmUser
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
